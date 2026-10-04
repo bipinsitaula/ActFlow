@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ActFlow
 
-## Getting Started
+ActFlow turns a vague intention ("I want to learn guitar", "start a side business") into a concrete plan, then keeps you moving one small step at a time. It assesses how ready you are, breaks the goal into steps, helps you get past blockers, and rewards progress with XP, streaks, and a shared leaderboard.
 
-First, run the development server:
+AI features run on a **local [Ollama](https://ollama.com) model**, so nothing leaves your machine. If Ollama is offline, built-in fallbacks keep the app usable.
+
+## Features
+
+- **Intentions** – write a goal in plain language and get a titled, step-by-step plan.
+- **Readiness assessment** – list your skills and levels; get a verdict (`go` / `prepare` / `reconsider`), a 0–100 score, strengths, gaps, and more realistic alternatives.
+- **Four modes** – each intention runs as `focus`, `coordinate`, `navigate`, or `decide`.
+- **Rich steps** – every step can have a duration, an owner, a blocking dependency, micro-actions, details, verification checklist, and resources (locations, learning material, videos, links).
+- **Next action** – a ranked "what should I do now?" view with a focus timer and verify checklist.
+- **Proof of completion** – attach a compressed photo to finished steps.
+- **Decisions** – track what you're unsure about, define criteria, and record go / pass.
+- **Friction handling** – pick what's blocking you and get a targeted way around it.
+- **Comments and reminders** – notes per intention and a reminders API.
+- **Leaderboard** – XP, steps, finished intentions, and streaks, shared by everyone using the running server.
+- **Flow diagram** – visualise how steps depend on each other.
+
+## Tech stack
+
+- [Next.js](https://nextjs.org) 16 (App Router) and React 19
+- TypeScript 5
+- Tailwind CSS 4
+- [lucide-react](https://lucide.dev) icons
+- Ollama for local LLM inference (default model `gemma4:e4b`)
+
+## Getting started
+
+### Prerequisites
+
+- Node.js 20+
+- (Optional) [Ollama](https://ollama.com) for AI-generated plans and assessments
+
+### Install and run
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). The root route redirects to `/dashboard`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Enable AI (optional)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+ollama pull gemma4:e4b
+ollama serve
+```
 
-## Learn More
+The app checks Ollama's status and shows it in the navigation. Without it, plans and assessments use the deterministic fallbacks in `lib/ai/fallback.ts`.
 
-To learn more about Next.js, take a look at the following resources:
+### Environment variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable       | Default                  | Description                  |
+| -------------- | ------------------------ | ---------------------------- |
+| `OLLAMA_HOST`  | `http://localhost:11434` | URL of the Ollama server     |
+| `OLLAMA_MODEL` | `gemma4:e4b`             | Model used for AI requests   |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Set them in `.env.local`.
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Command         | Description                |
+| --------------- | -------------------------- |
+| `npm run dev`   | Start the dev server       |
+| `npm run build` | Create a production build  |
+| `npm start`     | Run the production build   |
+| `npm run lint`  | Lint with ESLint           |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project structure
+
+```
+app/
+  dashboard/        Overview of your intentions
+  create/           Create a new intention
+  intention/[id]/   Plan, steps, assessment, decisions, comments
+  action/[id]/      Focused execution of the next step
+  rank/             Ranked next actions
+  leaderboard/      Global leaderboard
+  login/            Sign-in
+  api/
+    ai/             analyze, assess, plan, status endpoints
+    reminders/      Reminders endpoint
+    leaderboard/    Leaderboard read/write
+components/         UI, action, intention, friction, navigation components
+hooks/              useAuth, useIntentions
+lib/
+  ai/               Ollama client, planning, assessment, fallbacks
+  actions/          Next-action selection and ranking
+  friction/         Blocker catalog
+  leaderboard/      Server store and client sync
+  utils/            Helpers (cn, image, links, time)
+schemas/            Validation schemas
+types/              Shared TypeScript types
+```
+
+## Data and storage
+
+- **Leaderboard** is stored in `data/leaderboard.json` on the server and is shared by everyone using that instance. Scores are self-reported with no server-side verification, so treat it as friendly competition.
+- **Intentions** are managed through the `useIntentions` hook.
+
+## Notes for contributors
+
+This project uses a version of Next.js with breaking changes from older releases. Before changing framework-level code, read the relevant guide in `node_modules/next/dist/docs/` (see [AGENTS.md](AGENTS.md)).
